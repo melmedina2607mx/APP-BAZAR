@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi Bazar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg:#F4F3EE; --paper:#FFFFFF; --ink:#22261F; --muted:#6E7268; --line:#E2E0D8;
+    --green:#2E5E4E; --green-soft:#E3EDE8; --amber:#B47B1E; --amber-soft:#F6EDDA;
+    --red:#A8402F; --red-soft:#F5E4E0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Public Sans',sans-serif;font-size:15px}
+  header{background:var(--green);color:#fff;padding:24px 16px 0}
+  .wrap{max-width:960px;margin:0 auto}
+  .brand{font-family:'Fraunces',serif;font-size:28px;font-weight:700;letter-spacing:-.01em}
+  .sub{font-size:14px;opacity:.85;margin-top:2px}
+  .tabs{display:flex;gap:4px;margin-top:18px;flex-wrap:wrap}
+  .tab{padding:10px 18px;border:none;border-radius:10px 10px 0 0;font:600 15px 'Public Sans',sans-serif;cursor:pointer;background:rgba(255,255,255,.12);color:#fff}
+  .tab.active{background:var(--bg);color:var(--green)}
+  .tab-excel{margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,.4);font-size:14px}
+  main{max-width:960px;margin:0 auto;padding:24px 16px 60px}
+  .section{display:none;gap:20px}
+  .section.active{display:grid}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:20px}
+  h2{font-family:'Fraunces',serif;font-size:19px;font-weight:600;margin:0 0 16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .span2{grid-column:span 2;min-width:200px}
+  label{display:block;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px}
+  input,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font:15px 'Public Sans',sans-serif;color:var(--ink);background:#FDFDFB;outline:none}
+  input:focus,select:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
+  .btn{background:var(--green);color:#fff;border:none;border-radius:8px;padding:12px 20px;font:600 15px 'Public Sans',sans-serif;cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+  .btn:focus-visible,.tab:focus-visible,.link:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+  .row{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;align-items:center}
+  .head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .head h2{margin:0}
+  .search{max-width:260px}
+  .tablewrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;padding:8px 10px;border-bottom:2px solid var(--line);font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+  .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--green-soft);color:var(--green)}
+  .pill.sold{background:var(--red-soft);color:var(--red);font-weight:700}
+  .link{border:none;background:none;cursor:pointer;font:600 13px 'Public Sans',sans-serif;padding:0;margin-right:10px;color:var(--green)}
+  .link.danger{color:var(--red)}
+  .empty{padding:32px 0;text-align:center;color:var(--muted)}
+  .hint{margin-top:10px;font-size:14px;color:var(--muted)}
+  .hint b{color:var(--green);font-size:16px}
+  .note{font-size:12px;color:var(--muted)}
+  .lista{font-size:11px;color:var(--amber);font-weight:600}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+  .kpi{padding:18px}
+  .kpi .t{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+  .kpi .v{font-family:'Fraunces',serif;font-size:26px;font-weight:700;margin-top:6px}
+  .bar{height:8px;background:var(--line);border-radius:999px;overflow:hidden}
+  .bar>div{height:100%;background:var(--green);border-radius:999px}
+  .catrow{margin-bottom:12px}
+  .catrow .top{display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px}
+  .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+  .toplist div{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .toplist div:last-child{border-bottom:none}
+  .box{background:var(--green-soft);border-radius:8px;padding:10px 12px;font-size:13px}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 22px;border-radius:999px;font-size:14px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:100;display:none;max-width:calc(100% - 32px);text-align:center}
+  .muted{color:var(--muted);font-weight:400}
+  .backup{font-size:13px;color:var(--muted);margin-top:4px}
+  @media (max-width:520px){ .span2{grid-column:span 1;min-width:0} .tab{padding:9px 13px;font-size:14px} .search{max-width:none} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">Mi Bazar</div>
+    <div class="sub">Inventario y ventas · artículos del hogar</div>
+    <nav class="tabs">
+      <button class="tab active" data-tab="inventario">Inventario</button>
+      <button class="tab" data-tab="ventas">Ventas</button>
+      <button class="tab" data-tab="resumen">Resumen</button>
+      <button class="tab tab-excel" id="btnExcelTop">⬇ Excel</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- INVENTARIO -->
+  <section class="section active" id="inventario">
+    <div class="card">
+      <h2 id="formTitle">Agregar artículo</h2>
+      <div class="grid">
+        <div><label for="pCodigo">Código</label><input id="pCodigo" placeholder="P-001"></div>
+        <div class="span2"><label for="pNombre">Nombre del artículo</label><input id="pNombre" placeholder="Juego de tazas de cerámica"></div>
+        <div><label for="pCategoria">Categoría</label><input id="pCategoria" list="cats" placeholder="Cocina"><datalist id="cats"></datalist></div>
+        <div><label for="pPrecio">Precio venta ($)</label><input id="pPrecio" type="number" min="0" step="0.5" placeholder="90"></div>
+        <div><label for="pStock">Cantidad (uds)</label><input id="pStock" type="number" min="0" value="1"></div>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnGuardar">Agregar al inventario</button>
+        <button class="btn ghost" id="btnCancelar" style="display:none">Cancelar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="head">
+        <h2 id="prodCount">Artículos (0)</h2>
+        <input class="search" id="busqueda" placeholder="Buscar por nombre, código o categoría…">
+      </div>
+      <div id="prodTable"></div>
+    </div>
+  </section>
+
+  <!-- VENTAS -->
+  <section class="section" id="ventas">
+    <div class="card">
+      <h2>Registrar venta</h2>
+      <div id="ventaVacia" class="muted">Primero agrega artículos en la pestaña Inventario.</div>
+      <div id="ventaForm">
+        <div class="grid">
+          <div class="span2"><label for="vProducto">Artículo</label><select id="vProducto"></select></div>
+          <div><label for="vCantidad">Cantidad</label><input id="vCantidad" type="number" min="1" value="1"></div>
+          <div><label for="vPrecio">Precio final ($)</label><input id="vPrecio" type="number" min="0" step="0.5"></div>
+          <div><label for="vFecha">Fecha</label><input id="vFecha" type="date"></div>
+          <div class="span2"><label for="vNota">Nota (opcional)</label><input id="vNota" placeholder="Cliente, regateo, apartado, etc."></div>
+        </div>
+        <div class="hint" id="vTotal"></div>
+        <div class="row"><button class="btn" id="btnVenta">Registrar venta</button></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 id="histTitle">Historial</h2>
+      <div id="salesTable"></div>
+    </div>
+  </section>
+
+  <!-- RESUMEN -->
+  <section class="section" id="resumen">
+    <div class="kpis" id="kpis"></div>
+    <div class="card">
+      <h2>Ingresos por categoría</h2>
+      <div id="porCategoria"></div>
+    </div>
+    <div class="two">
+      <div class="card">
+        <h2>Más vendidos</h2>
+        <div id="topList" class="toplist"></div>
+      </div>
+      <div class="card">
+        <h2>Avance del bazar</h2>
+        <div id="avance"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Respaldo de datos</h2>
+      <div class="row" style="margin-top:0">
+        <button class="btn" id="btnExcel">⬇ Descargar Excel completo</button>
+        <button class="btn ghost" id="btnImportar">Restaurar desde Excel</button>
+        <input type="file" id="fileImport" accept=".xlsx" style="display:none">
+      </div>
+      <div class="backup">Los datos se guardan en este navegador. Descarga el Excel con frecuencia; si cambias de dispositivo o borras el historial, puedes restaurarlo con ese mismo archivo.</div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const KEY = "bazar-datos";
+  const CATS = ["Cocina","Decoración","Textiles","Organización","Baño","Electrodomésticos","Muebles","Otros"];
+  let products = [], sales = [], editId = null;
+
+  const $ = (id) => document.getElementById(id);
+  const money = (n) => new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(isNaN(n)?0:n);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const hoy = () => { const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); };
+
+  // ---------- Persistencia ----------
+  function load(){
+    try{ const raw = localStorage.getItem(KEY); if(raw){ const d=JSON.parse(raw); products=d.products||[]; sales=d.sales||[]; } }catch(e){}
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify({products, sales})); }catch(e){}
+  }
+
+  let toastT;
+  function notify(msg){
+    const t=$("toast"); t.textContent=msg; t.style.display="block";
+    clearTimeout(toastT); toastT=setTimeout(()=>t.style.display="none",2600);
+  }
+
+  // ---------- Tabs ----------
+  document.querySelectorAll(".tab[data-tab]").forEach(b=>{
+    b.addEventListener("click",()=>{
+      document.querySelectorAll(".tab[data-tab]").forEach(x=>x.classList.toggle("active",x===b));
+      document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===b.dataset.tab));
+    });
+  });
+
+  // ---------- Inventario ----------
+  function resetForm(){
+    $("pCodigo").value=""; $("pNombre").value=""; $("pCategoria").value=""; $("pPrecio").value=""; $("pStock").value="1";
+    editId=null; $("formTitle").textContent="Agregar artículo"; $("btnGuardar").textContent="Agregar al inventario"; $("btnCancelar").style.display="none";
+  }
+
+  $("btnGuardar").addEventListener("click",()=>{
+    const codigo=$("pCodigo").value.trim(), nombre=$("pNombre").value.trim();
+    if(!codigo||!nombre){ notify("El código y el nombre son obligatorios"); return; }
+    if(products.some(p=>p.codigo.toLowerCase()===codigo.toLowerCase() && p.id!==editId)){ notify("Ya existe un artículo con ese código"); return; }
+    const nuevo={
+      id: editId ?? Date.now(),
+      codigo, nombre,
+      categoria: $("pCategoria").value.trim() || "Sin categoría",
+      precio: parseFloat($("pPrecio").value)||0,
+      stock: parseInt($("pStock").value)||0
+    };
+    if(editId!==null){ products=products.map(p=>p.id===editId?nuevo:p); notify("Artículo actualizado"); }
+    else { products.push(nuevo); notify("Artículo agregado al inventario"); }
+    resetForm(); save(); render();
+    $("pCodigo").focus();
+  });
+  $("btnCancelar").addEventListener("click",resetForm);
+  $("busqueda").addEventListener("input",renderProducts);
+
+  window.editarProducto=(id)=>{
+    const p=products.find(x=>x.id===id); if(!p) return;
+    $("pCodigo").value=p.codigo; $("pNombre").value=p.nombre; $("pCategoria").value=p.categoria; $("pPrecio").value=p.precio; $("pStock").value=p.stock;
+    editId=id; $("formTitle").textContent="Editar artículo"; $("btnGuardar").textContent="Guardar cambios"; $("btnCancelar").style.display="inline-block";
+    window.scrollTo({top:0,behavior:"smooth"});
+  };
+  window.eliminarProducto=(id)=>{
+    const p=products.find(x=>x.id===id);
+    if(!p || !confirm(`¿Eliminar "${p.nombre}" del inventario?`)) return;
+    products=products.filter(x=>x.id!==id); save(); render(); notify("Artículo eliminado");
+  };
+
+  function renderProducts(){
+    const q=$("busqueda").value.toLowerCase();
+    const list=products.filter(p=>[p.nombre,p.codigo,p.categoria].some(v=>v.toLowerCase().includes(q)));
+    $("prodCount").textContent=`Artículos (${products.length})`;
+    if(!list.length){
+      $("prodTable").innerHTML=`<div class="empty">${products.length?"Ningún artículo coincide con la búsqueda.":"Tu inventario está vacío. Agrega tu primer artículo arriba."}</div>`;
+      return;
+    }
+    $("prodTable").innerHTML=`<div class="tablewrap"><table><thead><tr>
+      <th>Código</th><th>Artículo</th><th>Categoría</th><th>Precio</th><th>Disponibles</th><th></th></tr></thead><tbody>
+      ${list.map(p=>`<tr>
+        <td><b>${esc(p.codigo)}</b></td>
+        <td>${esc(p.nombre)}</td>
+        <td><span class="pill">${esc(p.categoria)}</span></td>
+        <td><b>${money(p.precio)}</b></td>
+        <td>${p.stock===0?'<span class="pill sold">Vendido</span>':p.stock}</td>
+        <td style="white-space:nowrap"><button class="link" onclick="editarProducto(${p.id})">Editar</button><button class="link danger" onclick="eliminarProducto(${p.id})">Eliminar</button></td>
+      </tr>`).join("")}</tbody></table></div>`;
+  }
+
+  // ---------- Ventas ----------
+  $("vFecha").value=hoy();
+  $("vProducto").addEventListener("change",()=>{
+    const p=products.find(x=>String(x.id)===$("vProducto").value);
+    $("vPrecio").value=p?p.precio:""; updateTotal();
+  });
+  ["vCantidad","vPrecio"].forEach(id=>$(id).addEventListener("input",updateTotal));
+  function updateTotal(){
+    if($("vProducto").value && $("vPrecio").value!==""){
+      $("vTotal").innerHTML=`Total de esta venta: <b>${money((parseFloat($("vPrecio").value)||0)*(parseInt($("vCantidad").value)||0))}</b>`;
+    } else $("vTotal").innerHTML="";
+  }
+
+  $("btnVenta").addEventListener("click",()=>{
+    const prod=products.find(p=>String(p.id)===$("vProducto").value);
+    if(!prod){ notify("Selecciona un artículo"); return; }
+    const cantidad=parseInt($("vCantidad").value)||0;
+    if(cantidad<=0){ notify("La cantidad debe ser mayor a 0"); return; }
+    if(cantidad>prod.stock){ notify(`Solo quedan ${prod.stock} unidades de ${prod.nombre}`); return; }
+    const precioUnit=$("vPrecio").value!==""?parseFloat($("vPrecio").value):prod.precio;
+    const venta={
+      id:Date.now(), fecha:$("vFecha").value||hoy(),
+      codigo:prod.codigo, nombre:prod.nombre, categoria:prod.categoria,
+      cantidad, precioUnit, precioLista:prod.precio, total:precioUnit*cantidad,
+      nota:$("vNota").value.trim()
+    };
+    sales.unshift(venta);
+    prod.stock-=cantidad;
+    $("vProducto").value=""; $("vCantidad").value="1"; $("vPrecio").value=""; $("vNota").value="";
+    save(); render(); notify(`Venta registrada: ${money(venta.total)}`);
+  });
+
+  window.eliminarVenta=(id)=>{
+    const v=sales.find(s=>s.id===id);
+    if(!v || !confirm(`¿Eliminar la venta de "${v.nombre}"? El artículo regresará al inventario.`)) return;
+    const p=products.find(x=>x.codigo===v.codigo); if(p) p.stock+=v.cantidad;
+    sales=sales.filter(s=>s.id!==id); save(); render(); notify("Venta eliminada y artículo devuelto al inventario");
+  };
+
+  function renderVentas(){
+    const has=products.length>0;
+    $("ventaVacia").style.display=has?"none":"block";
+    $("ventaForm").style.display=has?"block":"none";
+    const sel=$("vProducto"), cur=sel.value;
+    sel.innerHTML='<option value="">— Selecciona —</option>'+products.filter(p=>p.stock>0)
+      .map(p=>`<option value="${p.id}">${esc(p.codigo)} · ${esc(p.nombre)} (${p.stock} disp.)</option>`).join("");
+    sel.value=cur; updateTotal();
+
+    const ingresos=sales.reduce((a,s)=>a+s.total,0);
+    $("histTitle").textContent=`Historial (${sales.length} ventas · ${money(ingresos)})`;
+    if(!sales.length){ $("salesTable").innerHTML='<div class="empty">Aún no has registrado ventas.</div>'; return; }
+    $("salesTable").innerHTML=`<div class="tablewrap"><table><thead><tr>
+      <th>Fecha</th><th>Artículo</th><th>Cant.</th><th>P. unit.</th><th>Total</th><th></th></tr></thead><tbody>
+      ${sales.map(s=>`<tr>
+        <td style="white-space:nowrap">${esc(s.fecha)}</td>
+        <td>${esc(s.nombre)}${s.nota?`<div class="note">${esc(s.nota)}</div>`:""}</td>
+        <td>${s.cantidad}</td>
+        <td>${money(s.precioUnit)}${s.precioLista!=null&&s.precioUnit<s.precioLista?`<div class="lista">lista: ${money(s.precioLista)}</div>`:""}</td>
+        <td><b>${money(s.total)}</b></td>
+        <td><button class="link danger" onclick="eliminarVenta(${s.id})">Eliminar</button></td>
+      </tr>`).join("")}</tbody></table></div>`;
+  }
+
+  // ---------- Resumen ----------
+  function calc(){
+    const ingresos=sales.reduce((a,s)=>a+s.total,0);
+    const unidades=sales.reduce((a,s)=>a+s.cantidad,0);
+    const stockRestante=products.reduce((a,p)=>a+p.stock,0);
+    const potencial=products.reduce((a,p)=>a+p.precio*p.stock,0);
+    const descuentos=sales.reduce((a,s)=>a+Math.max(0,(s.precioLista??s.precioUnit)-s.precioUnit)*s.cantidad,0);
+    const porCat={}, porProd={};
+    sales.forEach(s=>{
+      (porCat[s.categoria] ||= {ingresos:0,unidades:0});
+      porCat[s.categoria].ingresos+=s.total; porCat[s.categoria].unidades+=s.cantidad;
+      (porProd[s.codigo] ||= {nombre:s.nombre,ingresos:0,unidades:0});
+      porProd[s.codigo].ingresos+=s.total; porProd[s.codigo].unidades+=s.cantidad;
+    });
+    const top=Object.entries(porProd).sort((a,b)=>b[1].ingresos-a[1].ingresos).slice(0,5);
+    const vendidos=products.filter(p=>p.stock===0);
+    return {ingresos,unidades,stockRestante,potencial,descuentos,porCat,top,vendidos};
+  }
+
+  function renderResumen(){
+    const r=calc();
+    $("kpis").innerHTML=[
+      ["Ingresos totales",money(r.ingresos),"var(--green)"],
+      ["Unidades vendidas",r.unidades,"var(--ink)"],
+      ["Unidades restantes",r.stockRestante,"var(--ink)"],
+      ["Si vendes todo lo que queda",money(r.potencial),"var(--amber)"]
+    ].map(([t,v,c])=>`<div class="card kpi"><div class="t">${t}</div><div class="v" style="color:${c}">${v}</div></div>`).join("");
+
+    const cats=Object.entries(r.porCat).sort((a,b)=>b[1].ingresos-a[1].ingresos);
+    $("porCategoria").innerHTML=cats.length?cats.map(([c,d])=>{
+      const pct=r.ingresos>0?d.ingresos/r.ingresos*100:0;
+      return `<div class="catrow"><div class="top"><span><b>${esc(c)}</b> <span class="muted">· ${d.unidades} uds</span></span><b>${money(d.ingresos)}</b></div><div class="bar"><div style="width:${pct}%"></div></div></div>`;
+    }).join(""):'<div class="muted">Sin ventas aún.</div>';
+
+    $("topList").innerHTML=r.top.length?r.top.map(([,d])=>`<div><span><b>${esc(d.nombre)}</b> <span class="muted">· ${d.unidades} uds</span></span><b>${money(d.ingresos)}</b></div>`).join(""):'<span class="muted">Sin ventas aún.</span>';
+
+    const total=r.unidades+r.stockRestante, pct=total>0?Math.round(r.unidades/total*100):0;
+    $("avance").innerHTML=`
+      <div style="font-size:14px;margin-bottom:10px">Total cedido en descuentos / regateo: <b style="color:var(--amber)">${money(r.descuentos)}</b></div>
+      <div style="font-size:14px;margin-bottom:6px">Has vendido el <b>${pct}%</b> de tus artículos.</div>
+      <div class="bar" style="height:10px;margin-bottom:14px"><div style="width:${pct}%"></div></div>
+      ${r.vendidos.length?`<div class="box"><b style="color:var(--green)">Ya vendidos por completo:</b> ${r.vendidos.map(p=>esc(p.nombre)).join(", ")}</div>`:""}`;
+  }
+
+  // ---------- Excel ----------
+  function exportarExcel(){
+    if(typeof XLSX==="undefined"){ notify("Se necesita conexión a internet para generar el Excel"); return; }
+    const r=calc(), wb=XLSX.utils.book_new();
+    const wsInv=XLSX.utils.json_to_sheet(products.map(p=>({
+      "Código":p.codigo,"Producto":p.nombre,"Categoría":p.categoria,"Precio de venta":p.precio,"Stock actual":p.stock,
+      "Estado":p.stock===0?"Vendido":"Disponible"
+    })),{header:["Código","Producto","Categoría","Precio de venta","Stock actual","Estado"]});
+    wsInv["!cols"]=[{wch:12},{wch:32},{wch:16},{wch:15},{wch:12},{wch:12}];
+    XLSX.utils.book_append_sheet(wb,wsInv,"Inventario");
+
+    const wsVen=XLSX.utils.json_to_sheet([...sales].sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(s=>({
+      "Fecha":s.fecha,"Código":s.codigo,"Producto":s.nombre,"Categoría":s.categoria,"Cantidad":s.cantidad,
+      "Precio de lista":s.precioLista??s.precioUnit,"Precio unitario":s.precioUnit,"Total venta":s.total,"Nota":s.nota
+    })),{header:["Fecha","Código","Producto","Categoría","Cantidad","Precio de lista","Precio unitario","Total venta","Nota"]});
+    wsVen["!cols"]=[{wch:12},{wch:12},{wch:32},{wch:16},{wch:10},{wch:15},{wch:15},{wch:12},{wch:26}];
+    XLSX.utils.book_append_sheet(wb,wsVen,"Ventas");
+
+    const wsRes=XLSX.utils.json_to_sheet([
+      {Concepto:"Ingresos totales",Valor:r.ingresos},
+      {Concepto:"Unidades vendidas",Valor:r.unidades},
+      {Concepto:"Unidades restantes en inventario",Valor:r.stockRestante},
+      {Concepto:"Ingreso potencial de lo que queda",Valor:r.potencial},
+      {Concepto:"Total cedido en descuentos",Valor:r.descuentos},
+      {},
+      {Concepto:"— Ingresos por categoría —",Valor:""},
+      ...Object.entries(r.porCat).map(([c,d])=>({Concepto:`${c} (${d.unidades} uds)`,Valor:d.ingresos}))
+    ]);
+    wsRes["!cols"]=[{wch:38},{wch:16}];
+    XLSX.utils.book_append_sheet(wb,wsRes,"Resumen");
+
+    XLSX.writeFile(wb,`bazar_${hoy()}.xlsx`);
+    notify("Excel descargado");
+  }
+  $("btnExcel").addEventListener("click",exportarExcel);
+  $("btnExcelTop").addEventListener("click",exportarExcel);
+
+  // ---------- Restaurar desde Excel ----------
+  $("btnImportar").addEventListener("click",()=>$("fileImport").click());
+  $("fileImport").addEventListener("change",async(e)=>{
+    const f=e.target.files[0]; if(!f) return;
+    if(typeof XLSX==="undefined"){ notify("Se necesita conexión a internet para leer el Excel"); return; }
+    if((products.length||sales.length) && !confirm("Esto reemplazará los datos actuales por los del archivo. ¿Continuar?")){ e.target.value=""; return; }
+    try{
+      const wb=XLSX.read(await f.arrayBuffer());
+      const inv=wb.Sheets["Inventario"]?XLSX.utils.sheet_to_json(wb.Sheets["Inventario"]):[];
+      const ven=wb.Sheets["Ventas"]?XLSX.utils.sheet_to_json(wb.Sheets["Ventas"]):[];
+      let base=Date.now();
+      products=inv.filter(r=>r["Código"]!=null).map(r=>({
+        id:base++, codigo:String(r["Código"]), nombre:String(r["Producto"]??""), categoria:String(r["Categoría"]??"Sin categoría"),
+        precio:Number(r["Precio de venta"])||0, stock:Number(r["Stock actual"])||0
+      }));
+      sales=ven.filter(r=>r["Código"]!=null).map(r=>{
+        const pu=Number(r["Precio unitario"])||0, c=Number(r["Cantidad"])||0;
+        return {id:base++, fecha:String(r["Fecha"]??""), codigo:String(r["Código"]), nombre:String(r["Producto"]??""),
+          categoria:String(r["Categoría"]??""), cantidad:c, precioUnit:pu,
+          precioLista:r["Precio de lista"]!=null?Number(r["Precio de lista"]):pu, total:Number(r["Total venta"])||pu*c, nota:String(r["Nota"]??"")};
+      }).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+      save(); render(); notify(`Restaurados ${products.length} artículos y ${sales.length} ventas`);
+    }catch(err){ notify("No se pudo leer el archivo. Usa un Excel descargado desde esta app."); }
+    e.target.value="";
+  });
+
+  // ---------- Render ----------
+  function render(){
+    $("cats").innerHTML=[...new Set([...CATS,...products.map(p=>p.categoria)])].map(c=>`<option value="${esc(c)}">`).join("");
+    renderProducts(); renderVentas(); renderResumen();
+  }
+
+  load(); render();
+})();
+</script>
+</body>
+</html>
